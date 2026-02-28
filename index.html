@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <title>Kusanya Taarifa za Wanachama</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .member { margin-bottom: 20px; border-bottom: 1px solid #ccc; padding-bottom: 10px; }
+        input { margin-bottom: 10px; width: 300px; }
+        button { margin-right: 10px; padding: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Kusanya Taarifa za Wanachama</h1>
+    <div id="formContainer">
+        <div class="member">
+            Jina Kamili la Mwanachama: <input type="text" class="fullName"><br>
+            Jina la Account: <input type="text" class="accountName"><br>
+            Namba za Simu: <input type="text" class="phone"><br>
+            Aina ya Mtandao: <input type="text" class="network"><br>
+        </div>
+    </div>
+    <button onclick="addMember()">Ongeza Mwanachama Mwingine</button>
+    <button onclick="generatePDF()">Generate PDF</button>
+
+    <script>
+        let memberCount = 1;
+
+        function addMember() {
+            memberCount++;
+            const div = document.createElement('div');
+            div.className = 'member';
+            div.innerHTML = `
+                Jina Kamili la Mwanachama: <input type="text" class="fullName"><br>
+                Jina la Account: <input type="text" class="accountName"><br>
+                Namba za Simu: <input type="text" class="phone"><br>
+                Aina ya Mtandao: <input type="text" class="network"><br>
+            `;
+            document.getElementById('formContainer').appendChild(div);
+        }
+
+        function generatePDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.text('Taarifa za Wanachama', 10, 10);
+            let y = 20;
+            const fullNames = document.getElementsByClassName('fullName');
+            const accountNames = document.getElementsByClassName('accountName');
+            const phones = document.getElementsByClassName('phone');
+            const networks = document.getElementsByClassName('network');
+
+            for (let i = 0; i < fullNames.length; i++) {
+                if (fullNames[i].value.trim() !== '') {  // Rudia tu kama sio tupu
+                    doc.text(`Mwanachama ${i + 1}:`, 10, y);
+                    y += 10;
+                    doc.text(`Jina Kamili: ${fullNames[i].value}`, 10, y);
+                    y += 10;
+                    doc.text(`Jina la Account: ${accountNames[i].value}`, 10, y);
+                    y += 10;
+                    doc.text(`Namba za Simu: ${phones[i].value}`, 10, y);
+                    y += 10;
+                    doc.text(`Aina ya Mtandao: ${networks[i].value}`, 10, y);
+                    y += 20;
+                    if (y > 280) {  // Rudia page mpya kama inaisha
+                        doc.addPage();
+                        y = 10;
+                    }
+                }
+            }
+            doc.save('taarifa_wanachama.pdf');
+        }
+    </script>
+</body>
+</html>
