@@ -1,2 +1,1 @@
-# atendensi
-kukusanya majina ya wanachama
+taarifa za wanachama
