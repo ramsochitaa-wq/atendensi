@@ -1,25 +1,32 @@
 <!DOCTYPE html>
 <html lang="sw">
 <head>
+    <meta charset="UTF-8">
     <title>Kusanya Taarifa za Wanachama</title>
+    <!-- Tumia version mpya zaidi ya jsPDF (3.0.1 au latest) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Kama haifanyi, jaribu hii alternative CDN -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/jspdf@latest/dist/jspdf.umd.min.js"></script> -->
     <style>
-        body { font-family: Arial, sans-serif; }
-        .member { margin-bottom: 20px; border-bottom: 1px solid #ccc; padding-bottom: 10px; }
-        input { margin-bottom: 10px; width: 300px; }
-        button { margin-right: 10px; padding: 10px; }
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .member { margin-bottom: 20px; border: 1px solid #ddd; padding: 10px; border-radius: 5px; }
+        input { margin-bottom: 8px; width: 100%; max-width: 400px; padding: 8px; }
+        button { padding: 10px 20px; margin-right: 10px; cursor: pointer; }
     </style>
 </head>
 <body>
     <h1>Kusanya Taarifa za Wanachama</h1>
+    <p>Andika taarifa, ongeza wanachama wengi, kisha bonyeza "Generate PDF". Kama PDF inakuwa tupu, angalia console (F12) kwa error.</p>
+    
     <div id="formContainer">
         <div class="member">
             Jina Kamili la Mwanachama: <input type="text" class="fullName"><br>
             Jina la Account: <input type="text" class="accountName"><br>
             Namba za Simu: <input type="text" class="phone"><br>
-            Aina ya Mtandao: <input type="text" class="network"><br>
+            Aina ya Mtandao (k.m. Vodacom, Airtel): <input type="text" class="network"><br>
         </div>
     </div>
+    
     <button onclick="addMember()">Ongeza Mwanachama Mwingine</button>
     <button onclick="generatePDF()">Generate PDF</button>
 
@@ -40,34 +47,57 @@
         }
 
         function generatePDF() {
+            if (typeof window.jspdf === 'undefined') {
+                alert("jsPDF haijaload! Angalia internet au jaribu browser nyingine bila extensions.");
+                console.error("jsPDF not loaded");
+                return;
+            }
+
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            doc.text('Taarifa za Wanachama', 10, 10);
-            let y = 20;
+
+            doc.setFont("helvetica"); // Default font inayofaa herufi nyingi
+            doc.setFontSize(16);
+            doc.text('Taarifa za Wanachama', 20, 20);
+
+            let y = 35;
             const fullNames = document.getElementsByClassName('fullName');
             const accountNames = document.getElementsByClassName('accountName');
             const phones = document.getElementsByClassName('phone');
             const networks = document.getElementsByClassName('network');
 
+            let hasData = false;
+
             for (let i = 0; i < fullNames.length; i++) {
-                if (fullNames[i].value.trim() !== '') {  // Rudia tu kama sio tupu
-                    doc.text(`Mwanachama ${i + 1}:`, 10, y);
-                    y += 10;
-                    doc.text(`Jina Kamili: ${fullNames[i].value}`, 10, y);
-                    y += 10;
-                    doc.text(`Jina la Account: ${accountNames[i].value}`, 10, y);
-                    y += 10;
-                    doc.text(`Namba za Simu: ${phones[i].value}`, 10, y);
-                    y += 10;
-                    doc.text(`Aina ya Mtandao: ${networks[i].value}`, 10, y);
-                    y += 20;
-                    if (y > 280) {  // Rudia page mpya kama inaisha
+                const name = fullNames[i].value.trim();
+                if (name !== '') {
+                    hasData = true;
+                    doc.setFontSize(12);
+                    doc.text(`Mwanachama ${i + 1}:`, 20, y);
+                    y += 8;
+                    doc.text(`Jina Kamili: ${name}`, 20, y);
+                    y += 7;
+                    doc.text(`Jina la Account: ${accountNames[i].value}`, 20, y);
+                    y += 7;
+                    doc.text(`Namba za Simu: ${phones[i].value}`, 20, y);
+                    y += 7;
+                    doc.text(`Aina ya Mtandao: ${networks[i].value}`, 20, y);
+                    y += 12;
+
+                    if (y > 270) { // Rudia page mpya
                         doc.addPage();
-                        y = 10;
+                        y = 20;
                     }
                 }
             }
+
+            if (!hasData) {
+                alert("Hakuna taarifa iliyojazwa! Andika angalau mwanachama mmoja.");
+                return;
+            }
+
             doc.save('taarifa_wanachama.pdf');
+            console.log("PDF generated successfully");
         }
     </script>
 </body>
