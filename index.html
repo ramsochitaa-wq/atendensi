@@ -4,15 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Atendensi Wanachama - App</title>
-    <!-- PWA Meta Tags -->
-    <meta name="description" content="App ya kusanya, kuhariri na kuhifadhi taarifa za wanachama. Inapatikana offline kidogo.">
+    <meta name="description" content="App ya kusanya na kuhariri taarifa za wanachama">
     <meta name="theme-color" content="#4CAF50">
-    <meta name="background-color" content="#ffffff">
-    <!-- Manifest for PWA -->
     <link rel="manifest" href="./manifest.webmanifest">
-    <!-- Icons (badilisha na zako baadaye) -->
     <link rel="icon" href="https://via.placeholder.com/192?text=AT" type="image/png">
-    <link rel="apple-touch-icon" href="https://via.placeholder.com/192?text=AT">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
@@ -20,20 +15,19 @@
         table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
         th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
         th { background-color: #4CAF50; color: white; }
-        input { width: 100%; border: none; background: transparent; padding: 5px; box-sizing: border-box; }
+        input { width: 100%; border: none; background: transparent; padding: 5px; }
         input:focus { outline: 2px solid #4CAF50; background: #fff; }
-        button { padding: 10px 20px; margin: 5px; cursor: pointer; border: none; border-radius: 4px; }
-        .add-btn { background: #2196F3; color: white; }
-        .pdf-btn { background: #FF9800; color: white; }
-        .email-btn { background: #9C27B0; color: white; }
-        .clear-btn { background: #f44336; color: white; }
-        .actions { text-align: center; }
-        #status { color: #4CAF50; font-weight: bold; margin: 10px 0; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; border: none; border-radius: 4px; color: white; }
+        .add { background: #2196F3; }
+        .pdf { background: #FF9800; }
+        .email { background: #9C27B0; }
+        .clear { background: #f44336; }
+        #status { color: #4CAF50; font-weight: bold; }
     </style>
 </head>
 <body>
     <h1>Atendensi Wanachama</h1>
-    <p>Hariri moja kwa moja kwenye table. Mabadiliko yanahifadhiwa mara moja. Unaweza ku-install app hii kwenye simu yako (bonyeza + kwenye Chrome).</p>
+    <p>Hariri moja kwa moja kwenye table. Mabadiliko yanahifadhiwa mara moja. Bonyeza + kwenye Chrome ili ku-install kama app.</p>
     
     <table id="membersTable">
         <thead>
@@ -48,94 +42,57 @@
         <tbody id="tableBody"></tbody>
     </table>
     
-    <button class="add-btn" onclick="addRow()">+ Ongeza Mwanachama</button>
-    <button class="pdf-btn" onclick="generatePDF()">Generate PDF</button>
-    <button class="email-btn" onclick="sendViaEmail()">Tuma kwa Email</button>
-    <button class="clear-btn" onclick="clearAllData()">Futa Data Zote</button>
+    <button class="add" onclick="addRow()">+ Ongeza Mwanachama</button>
+    <button class="pdf" onclick="generatePDF()">Generate PDF</button>
+    <button class="email" onclick="sendViaEmail()">Tuma kwa Email</button>
+    <button class="clear" onclick="clearAllData()">Futa Data Zote</button>
     
     <p id="status"></p>
 
     <script>
         const tableBody = document.getElementById('tableBody');
-        const storageKey = 'wanachamaData_v2';
+        const storageKey = 'wanachamaData';
         const status = document.getElementById('status');
 
         function loadData() {
             const saved = localStorage.getItem(storageKey);
-            if (saved) {
-                JSON.parse(saved).forEach(row => addRow(row.fullName, row.accountName, row.phone, row.network));
-                showStatus('Data imerudishwa kutoka kumbukumbu.');
-            } else {
-                addRow();
-            }
+            if (saved) JSON.parse(saved).forEach(r => addRow(r.fullName, r.accountName, r.phone, r.network));
+            else addRow();
         }
 
         function saveData() {
             const rows = [];
             tableBody.querySelectorAll('tr').forEach(tr => {
-                const inputs = tr.querySelectorAll('input');
-                if (inputs.length === 4) {
-                    const data = {
-                        fullName: inputs[0].value.trim(),
-                        accountName: inputs[1].value.trim(),
-                        phone: inputs[2].value.trim(),
-                        network: inputs[3].value.trim()
-                    };
-                    if (data.fullName) rows.push(data);
+                const ins = tr.querySelectorAll('input');
+                if (ins.length === 4) {
+                    const d = {fullName: ins[0].value.trim(), accountName: ins[1].value.trim(), phone: ins[2].value.trim(), network: ins[3].value.trim()};
+                    if (d.fullName) rows.push(d);
                 }
             });
             localStorage.setItem(storageKey, JSON.stringify(rows));
-            showStatus('Imehifadhiwa!');
+            status.textContent = 'Imehifadhiwa!'; setTimeout(() => status.textContent='', 2000);
         }
 
-        function addRow(fullName = '', accountName = '', phone = '', network = '') {
+        function addRow(fn='', an='', ph='', net='') {
             const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td><input value="${fullName}" oninput="saveData()"></td>
-                <td><input value="${accountName}" oninput="saveData()"></td>
-                <td><input value="${phone}" oninput="saveData()"></td>
-                <td><input value="${network}" oninput="saveData()"></td>
-                <td class="actions"><button onclick="deleteRow(this)">Futa</button></td>
-            `;
+            tr.innerHTML = `<td><input value="\( {fn}" oninput="saveData()"></td><td><input value=" \){an}" oninput="saveData()"></td><td><input value="\( {ph}" oninput="saveData()"></td><td><input value=" \){net}" oninput="saveData()"></td><td><button onclick="this.closest('tr').remove(); saveData();">Futa</button></td>`;
             tableBody.appendChild(tr);
             saveData();
         }
 
-        function deleteRow(btn) {
-            if (confirm('Futa mwanachama?')) {
-                btn.closest('tr').remove();
-                saveData();
-            }
-        }
-
-        function clearAllData() {
-            if (confirm('Futa YOTE?')) {
-                localStorage.removeItem(storageKey);
-                tableBody.innerHTML = '';
-                addRow();
-                showStatus('Data zote zimefutwa.');
-            }
-        }
-
-        function showStatus(msg) {
-            status.textContent = msg;
-            setTimeout(() => status.textContent = '', 2500);
-        }
-
         function generatePDF() {
-            const { jsPDF } = window.jspdf;
-            if (!jsPDF) return alert('jsPDF haikupakuliwa.');
+            const { jsPDF } = window.jspdf || {};
+            if (!jsPDF) return alert('PDF library haikupakuliwa.');
             const doc = new jsPDF();
             doc.text('Taarifa za Wanachama', 20, 20);
             let y = 35;
             tableBody.querySelectorAll('tr').forEach((tr, i) => {
-                const inputs = tr.querySelectorAll('input');
-                const name = inputs[0]?.value.trim();
-                if (name) {
-                    doc.text(`Mwanachama ${i+1}: ${name}`, 20, y); y += 10;
-                    doc.text(`Account: ${inputs[1].value}`, 30, y); y += 7;
-                    doc.text(`Simu: ${inputs[2].value}`, 30, y); y += 7;
-                    doc.text(`Mtandao: ${inputs[3].value}`, 30, y); y += 12;
+                const ins = tr.querySelectorAll('input');
+                if (ins[0]?.value.trim()) {
+                    doc.text(`Mwanachama ${i+1}: ${ins[0].value}`, 20, y); y += 10;
+                    doc.text(`Account: ${ins[1].value}`, 30, y); y += 7;
+                    doc.text(`Simu: ${ins[2].value}`, 30, y); y += 7;
+                    doc.text(`Mtandao: ${ins[3].value}`, 30, y); y += 10;
                     if (y > 270) { doc.addPage(); y = 20; }
                 }
             });
@@ -145,23 +102,15 @@
         function sendViaEmail() {
             let body = 'Taarifa za Wanachama:\n\n';
             tableBody.querySelectorAll('tr').forEach((tr, i) => {
-                const inputs = tr.querySelectorAll('input');
-                const name = inputs[0]?.value.trim();
-                if (name) {
-                    body += `Mwanachama ${i+1}: ${name}\nAccount: ${inputs[1].value}\nSimu: ${inputs[2].value}\nMtandao: ${inputs[3].value}\n\n`;
-                }
+                const ins = tr.querySelectorAll('input');
+                if (ins[0]?.value.trim()) body += `Mwanachama ${i+1}: ${ins[0].value}\nAccount: ${ins[1].value}\nSimu: ${ins[2].value}\nMtandao: ${ins[3].value}\n\n`;
             });
             if (body === 'Taarifa za Wanachama:\n\n') return alert('Hakuna data.');
-            window.location.href = `mailto:ramsochitaa@gmail.com?subject=Atendensi Wanachama&body=${encodeURIComponent(body)}`;
+            location.href = `mailto:ramsochitaa@gmail.com?subject=Atendensi&body=${encodeURIComponent(body)}`;
         }
 
-        // Register Service Worker for PWA
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('SW registered', reg))
-                    .catch(err => console.log('SW failed', err));
-            });
+            navigator.serviceWorker.register('./sw.js').catch(e => console.log('SW error:', e));
         }
 
         loadData();
