@@ -3,73 +3,117 @@
 <head>
     <meta charset="UTF-8">
     <title>Kusanya Taarifa za Wanachama</title>
-    <!-- Tumia version mpya zaidi ya jsPDF (3.0.1 au latest) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <!-- Kama haifanyi, jaribu hii alternative CDN -->
-    <!-- <script src="https://cdn.jsdelivr.net/npm/jspdf@latest/dist/jspdf.umd.min.js"></script> -->
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
-        .member { margin-bottom: 20px; border: 1px solid #ddd; padding: 10px; border-radius: 5px; }
-        input { margin-bottom: 8px; width: 100%; max-width: 400px; padding: 8px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        input { width: 100%; padding: 5px; box-sizing: border-box; }
         button { padding: 10px 20px; margin-right: 10px; cursor: pointer; }
+        #saveCheckbox { width: auto; }
     </style>
 </head>
 <body>
     <h1>Kusanya Taarifa za Wanachama</h1>
-    <p>Andika taarifa, ongeza wanachama wengi, kisha bonyeza "Generate PDF". Kama PDF inakuwa tupu, angalia console (F12) kwa error.</p>
+    <p>Andika taarifa kwenye table. Data itasave automatically kwenye browser yako (localStorage) ili uendelee pale ulipoishia hata ukifunga page. Bonyeza "Ongeza Mwanachama" ili kuongeza row mpya. Bonyeza "Generate PDF" ili kusave kama PDF. Kama unataka kusave data kwa email, weka tick chini na bonyeza "Send via Email".</p>
     
-    <div id="formContainer">
-        <div class="member">
-            Jina Kamili la Mwanachama: <input type="text" class="fullName"><br>
-            Jina la Account: <input type="text" class="accountName"><br>
-            Namba za Simu: <input type="text" class="phone"><br>
-            Aina ya Mtandao (k.m. Vodacom, Airtel): <input type="text" class="network"><br>
-        </div>
-    </div>
+    <table id="membersTable">
+        <thead>
+            <tr>
+                <th>Jina Kamili la Mwanachama</th>
+                <th>Jina la Account</th>
+                <th>Namba za Simu</th>
+                <th>Aina ya Mtandao</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody">
+            <!-- Rows zitajazwa na JS -->
+        </tbody>
+    </table>
     
-    <button onclick="addMember()">Ongeza Mwanachama Mwingine</button>
+    <button onclick="addRow()">Ongeza Mwanachama Mwingine</button>
     <button onclick="generatePDF()">Generate PDF</button>
+    <button onclick="sendViaEmail()">Send via Email</button>
+    <br><br>
+    <label><input type="checkbox" id="saveCheckbox" checked> Wezesha kusave kumbukumbu (localStorage) na email option</label>
 
     <script>
-        let memberCount = 1;
+        const tableBody = document.getElementById('tableBody');
+        const storageKey = 'wanachamaData'; // Key ya localStorage
 
-        function addMember() {
-            memberCount++;
-            const div = document.createElement('div');
-            div.className = 'member';
-            div.innerHTML = `
-                Jina Kamili la Mwanachama: <input type="text" class="fullName"><br>
-                Jina la Account: <input type="text" class="accountName"><br>
-                Namba za Simu: <input type="text" class="phone"><br>
-                Aina ya Mtandao: <input type="text" class="network"><br>
-            `;
-            document.getElementById('formContainer').appendChild(div);
+        // Function ya ku-load data kutoka localStorage
+        function loadData() {
+            const savedData = localStorage.getItem(storageKey);
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                data.forEach(row => addRow(row.fullName, row.accountName, row.phone, row.network));
+            } else {
+                addRow(); // Ongeza row moja default kama hakuna data
+            }
         }
 
+        // Function ya kusave data kwenye localStorage
+        function saveData() {
+            if (document.getElementById('saveCheckbox').checked) {
+                const rows = [];
+                const trs = tableBody.getElementsByTagName('tr');
+                for (let tr of trs) {
+                    const inputs = tr.getElementsByTagName('input');
+                    if (inputs.length >= 4) {
+                        rows.push({
+                            fullName: inputs[0].value.trim(),
+                            accountName: inputs[1].value.trim(),
+                            phone: inputs[2].value.trim(),
+                            network: inputs[3].value.trim()
+                        });
+                    }
+                }
+                localStorage.setItem(storageKey, JSON.stringify(rows.filter(row => row.fullName !== ''))); // Rudia non-empty rows
+            }
+        }
+
+        // Function ya kuongeza row mpya (na optional pre-fill)
+        function addRow(fullName = '', accountName = '', phone = '', network = '') {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><input type="text" value="${fullName}" oninput="saveData()"></td>
+                <td><input type="text" value="${accountName}" oninput="saveData()"></td>
+                <td><input type="text" value="${phone}" oninput="saveData()"></td>
+                <td><input type="text" value="${network}" oninput="saveData()"></td>
+                <td><button onclick="deleteRow(this)">Futa</button></td>
+            `;
+            tableBody.appendChild(tr);
+        }
+
+        // Function ya kufuta row
+        function deleteRow(button) {
+            const tr = button.parentNode.parentNode;
+            tr.remove();
+            saveData();
+        }
+
+        // Function ya generate PDF
         function generatePDF() {
             if (typeof window.jspdf === 'undefined') {
-                alert("jsPDF haijaload! Angalia internet au jaribu browser nyingine bila extensions.");
-                console.error("jsPDF not loaded");
+                alert("jsPDF haijaload! Angalia internet au jaribu browser nyingine.");
                 return;
             }
 
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-
-            doc.setFont("helvetica"); // Default font inayofaa herufi nyingi
+            doc.setFont("helvetica");
             doc.setFontSize(16);
             doc.text('Taarifa za Wanachama', 20, 20);
 
             let y = 35;
-            const fullNames = document.getElementsByClassName('fullName');
-            const accountNames = document.getElementsByClassName('accountName');
-            const phones = document.getElementsByClassName('phone');
-            const networks = document.getElementsByClassName('network');
-
             let hasData = false;
+            const trs = tableBody.getElementsByTagName('tr');
 
-            for (let i = 0; i < fullNames.length; i++) {
-                const name = fullNames[i].value.trim();
+            for (let i = 0; i < trs.length; i++) {
+                const inputs = trs[i].getElementsByTagName('input');
+                const name = inputs[0].value.trim();
                 if (name !== '') {
                     hasData = true;
                     doc.setFontSize(12);
@@ -77,14 +121,14 @@
                     y += 8;
                     doc.text(`Jina Kamili: ${name}`, 20, y);
                     y += 7;
-                    doc.text(`Jina la Account: ${accountNames[i].value}`, 20, y);
+                    doc.text(`Jina la Account: ${inputs[1].value}`, 20, y);
                     y += 7;
-                    doc.text(`Namba za Simu: ${phones[i].value}`, 20, y);
+                    doc.text(`Namba za Simu: ${inputs[2].value}`, 20, y);
                     y += 7;
-                    doc.text(`Aina ya Mtandao: ${networks[i].value}`, 20, y);
+                    doc.text(`Aina ya Mtandao: ${inputs[3].value}`, 20, y);
                     y += 12;
 
-                    if (y > 270) { // Rudia page mpya
+                    if (y > 270) {
                         doc.addPage();
                         y = 20;
                     }
@@ -92,13 +136,49 @@
             }
 
             if (!hasData) {
-                alert("Hakuna taarifa iliyojazwa! Andika angalau mwanachama mmoja.");
+                alert("Hakuna taarifa iliyojazwa!");
                 return;
             }
 
             doc.save('taarifa_wanachama.pdf');
-            console.log("PDF generated successfully");
         }
+
+        // Function ya kusend via email (inafungua email client)
+        function sendViaEmail() {
+            if (!document.getElementById('saveCheckbox').checked) {
+                alert("Wezesha kusave kumbukumbu kwanza!");
+                return;
+            }
+
+            let body = 'Taarifa za Wanachama:\n\n';
+            const trs = tableBody.getElementsByTagName('tr');
+            for (let i = 0; i < trs.length; i++) {
+                const inputs = trs[i].getElementsByTagName('input');
+                const name = inputs[0].value.trim();
+                if (name !== '') {
+                    body += `Mwanachama ${i + 1}:\n`;
+                    body += `Jina Kamili: ${name}\n`;
+                    body += `Jina la Account: ${inputs[1].value}\n`;
+                    body += `Namba za Simu: ${inputs[2].value}\n`;
+                    body += `Aina ya Mtandao: ${inputs[3].value}\n\n`;
+                }
+            }
+
+            if (body === 'Taarifa za Wanachama:\n\n') {
+                alert("Hakuna data ya kusend!");
+                return;
+            }
+
+            const email = 'ramsochitaa@gmail.com';
+            const subject = 'Taarifa za Wanachama - Kumbukumbu';
+            window.location.href = `mailto:\( {email}?subject= \){encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        }
+
+        // Load data wakati page inaload
+        loadData();
+
+        // Save wakati checkbox inabadilika
+        document.getElementById('saveCheckbox').addEventListener('change', saveData);
     </script>
 </body>
 </html>
