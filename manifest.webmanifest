@@ -1,0 +1,12 @@
+{
+  "name": "Atendensi Wanachama",
+  "short_name": "Atendensi",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4CAF50",
+  "icons": [
+    {"src": "https://via.placeholder.com/192?text=AT", "sizes": "192x192", "type": "image/png"},
+    {"src": "https://via.placeholder.com/512?text=AT", "sizes": "512x512", "type": "image/png"}
+  ]
+}
